@@ -3,9 +3,14 @@ data Time = Time{
   minute :: Int 
 } deriving Show
 
-data Location  = Location{
+data place  = place{
   locationID :: Int,
-  places: [String]
+  placeId :: Int,
+  places: String
+}
+data Location = Location{
+  locationId :: Int,
+  location:: String
 } 
 
 data Event = Event
@@ -26,7 +31,6 @@ data ConferenceSchedule = ConferenceSchedule
   events     :: [Event]
   } deriving Show
 
-TimeCheck:: Time->Time->Time->Time->Bool
 
 main :: IO()
 main = do
