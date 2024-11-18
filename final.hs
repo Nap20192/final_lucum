@@ -125,12 +125,32 @@ showbyLocation events (loc:locs) =
 
 
 
-generateEventReport :: ConferenceSchedule -> String
-generateEventReport schedule = "Total events: " ++ show(length(events schedule)) 
+generateEventReport :: [ConferenceSchedule] -> [Location]->[String]->String
+generateEventReport [] _  _= ""
+generateEventReport (x:xs) l s= "id: "++show(scheduleId x)++"\n"++"Total events: " ++ show(length(events x))  ++"\n"++ showbyLocation (events x) l++ "\n" ++"\nSpeakers: \n" ++ showSpeakers (events x) s ++ generateEventReport xs l s
 
 
+removeDuplicates :: [String] -> [String]
+removeDuplicates [] = []
+removeDuplicates (x:xs)
+  | x `elem` xs = removeDuplicates xs
+  | otherwise   = x : removeDuplicates xs
 
+listSpeakers :: [Event]->[String]
+listSpeakers [] = [] 
+listSpeakers (x:xs) = (speaker x : listSpeakers xs)
 location1 = Location 1 "Castle"
+
+setSpeakers :: [String]->[String]
+setSpeakers a = removeDuplicates a
+
+checkSpeaker :: Event -> String -> Bool
+checkSpeaker e s = speaker e == s
+
+showSpeakers:: [Event] -> [String]->String
+showSpeakers _ [] = ""
+showSpeakers events (s:ss) ="Speaker: " ++  s ++ ", Amount: " ++ show (length (filter (`checkSpeaker` s) events)) ++ "\n" ++ showSpeakers events ss
+
 
 bedroom = Place 1 1 "Bedroom"
 
@@ -162,9 +182,11 @@ event5 = Event 5 "What it's like to be Batman" (Time 9 30) (Time 10 30) gothamRo
 
 event6 = Event 6 "Gojo Satoru's Arrival" (Time 20 31) (Time 21 26) shibuyaDistrict "Gojo Satoru"
 
+event7 = Event 7 "What " (Time 21 27) (Time 22 30) gothamRoom "Nikolay Kogay"
+
 
 schedule :: ConferenceSchedule
-schedule = ConferenceSchedule 1 location1 [event1]
+schedule = ConferenceSchedule 1  location1 [event1]
 
 main :: IO ()
 main = do
@@ -187,7 +209,6 @@ main = do
   let updatedSchedule5 = addEventToSchedule event5 updatedSchedule4
   print updatedSchedule5
 
-
   let updatedSchedule6 = updateEventName 1 updatedSchedule5 "Don't be Ninja"
   print updatedSchedule6
   putStrLn "\n"
@@ -203,5 +224,14 @@ main = do
   let updatedSchedule9 = updateEventEndTime 4 updatedSchedule8 (Time 11 0)
   print updatedSchedule9
   putStrLn "\n"
-  putStrLn(generateEventReport updatedSchedule9) 
-  putStrLn(showbyLocation (events updatedSchedule9) locations)
+
+
+  let updatedSchedule10 = addEventToSchedule event7 updatedSchedule9
+  print updatedSchedule10
+
+  let schedules = [updatedSchedule1, updatedSchedule10]
+ 
+  let a = listSpeakers (events updatedSchedule10)
+  let aa = setSpeakers a 
+
+  putStrLn(generateEventReport schedules locations aa) 
