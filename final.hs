@@ -131,6 +131,11 @@ vegasRoom = Place 1 1 "Las Vegas Room"
 gothamRoom = Place 2 1 "Gotham Room"
 
 
+location3 = Location 3 "Tokyo"
+
+shibuyaDistrict = Place 1 3 "Shibuya District"
+
+
 
 event1 = Event 1 "How to be ninja" (Time 9 0) (Time 10 0) vegasRoom "R. H."
 
@@ -142,6 +147,7 @@ event4 = Event 4 "1 Billion Lions vs Every Pokemon: Let's Settle This Once and F
 
 event5 = Event 5 "What it's like to be Batman" (Time 9 30) (Time 10 30) gothamRoom "Nikolay Kogay"
 
+event6 = Event 6 "Gojo Satoru's Arrival" (Time 20 31) (Time 21 26) shibuyaDistrict "Gojo Satoru"
 
 
 schedule :: ConferenceSchedule
