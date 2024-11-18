@@ -229,7 +229,7 @@ main = do
   let updatedSchedule10 = addEventToSchedule event7 updatedSchedule9
   print updatedSchedule10
 
-  let schedules = [updatedSchedule1, updatedSchedule10]
+  let schedules = [ updatedSchedule10]
  
   let a = listSpeakers (events updatedSchedule10)
   let aa = setSpeakers a 
