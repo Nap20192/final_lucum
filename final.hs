@@ -114,6 +114,19 @@ updateEventEndTime id schedule newTime =
         updatedEvents = map (\eventInSchedule -> if (eventId eventInSchedule == id && (checkTimeSlotAvailability updatedEvent schedule) && not(convertedNewTime <= timeConvertor(startTime eventInSchedule))) then updatedEvent else eventInSchedule) (events schedule)
     Nothing -> schedule
 
+checkLocation :: Event -> Location -> Bool
+checkLocation e l = locationId l == locationID (eventLocation e)
+
+showbyLocation :: [Event] -> [Location] -> String
+showbyLocation _ [] = ""
+showbyLocation events (loc:locs) =
+  "Location: " ++ location loc ++ ", Events: " ++ show (length (filter (`checkLocation` loc) events)) ++ "\n"
+  ++ showbyLocation events locs
+
+
+
+generateEventReport :: ConferenceSchedule -> String
+generateEventReport schedule = "Total events: " ++ show(length(events schedule)) 
 
 
 
@@ -135,7 +148,7 @@ location3 = Location 3 "Tokyo"
 
 shibuyaDistrict = Place 1 3 "Shibuya District"
 
-
+locations = [location1,location2,location3]
 
 event1 = Event 1 "How to be ninja" (Time 9 0) (Time 10 0) vegasRoom "R. H."
 
@@ -190,3 +203,5 @@ main = do
   let updatedSchedule9 = updateEventEndTime 4 updatedSchedule8 (Time 11 0)
   print updatedSchedule9
   putStrLn "\n"
+  putStrLn(generateEventReport updatedSchedule9) 
+  putStrLn(showbyLocation (events updatedSchedule9) locations)
