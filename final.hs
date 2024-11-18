@@ -1,63 +1,59 @@
-data Time = Time{ 
-  hour :: Int ,
-  minute :: Int 
-} deriving Show
+import Data.Either (fromRight)
+import Data.Maybe (fromJust)
+import Data.List (find, delete)
 
-data Place  = Place{
-  locationID :: Int,
-  placeId :: Int,
-  place: String
-}deriving Show
-
-data Location = Location{
-  locationId :: Int,
-  location:: String
-} deriving Show
-
-data Event = Event
-  { 
-  scheduleId :: Int,
-  eventId   :: Int,
-  name      :: String,
+data Event = Event {
+  eventId :: Int,
+  name :: String,
   startTime :: Time,
-  endTime   :: Time,
-  place  :: Place,
-  speaker   :: String
-  } deriving Show
+  endTime :: Time,
+  eventLocation :: Place,
+  speaker :: String
+} deriving (Show, Eq)
 
-data ConferenceSchedule = ConferenceSchedule
-  {
+
+data ConferenceSchedule = ConferenceSchedule {
   scheduleId :: Int,
-  location   :: Location,
-  } deriving Show
+  conferenceLocation :: Location,
+  events :: [Event]
+} deriving (Show)
 
 
-  
+data Time = Time {
+  hour :: Int,
+  minute :: Int
+} deriving (Show, Eq)
+
+
+data Place  = Place {
+  placeId :: Int,
+  locationID :: Int,
+  places :: String
+} deriving (Show, Eq)
+
+data Location = Location {
+  locationId :: Int,
+  location :: String
+} deriving (Show, Eq)
 
 
 safeAdd :: Event -> ConferenceSchedule -> Either String ConferenceSchedule
 safeAdd event schedule
+  | elem event (events schedule) = Left "This Event is already in the schedule"
   | checkTimeSlotAvailability event schedule = Left "This time is already taken by another event"
-  | otherwise = Right (ConferenceSchedule id location ([event] ++ (events schedule)))
+  | otherwise = Right (ConferenceSchedule id location ((events schedule) ++ [event]))
   where
     id = scheduleId schedule
     location = conferenceLocation schedule
 
-
-addEventToSchedule :: Event -> ConferenceSchedule -> Either String ConferenceSchedule
-addEventToSchedule event schedule = (safeAdd event schedule)
+addEventToSchedule :: Event -> ConferenceSchedule -> ConferenceSchedule
+addEventToSchedule event schedule = 
+  case safeAdd event schedule of
+    Right updatedSchedule -> updatedSchedule
+    Left errorMsg -> schedule
   
-findTime:: [Event]->Time->[Event]
-findTime [] _ = []
-findTime(x:xs) time 
-  | current < timec =findTime xs time
-  | current >= timec = xs
-  where:
-  current = timeConvertor(startTime x)
-  timec = timeConvertor(startTime time)
-
 timeConvertor :: Time -> Double
-timeConvertor (Time h m) = fromIntegral h + (fromIntegral m)*0.01 
+timeConvertor (Time h m) = fromIntegral h + (fromIntegral m)*0.01
 
 compareTime :: Event -> Event -> Bool
 compareTime event1 event2 
@@ -70,73 +66,121 @@ compareTime event1 event2
     end1 = timeConvertor(endTime event1)
     end2 = timeConvertor(endTime event2)
 
-compareLocation
-
-
 checkTimeSlotAvailability :: Event -> ConferenceSchedule -> Bool
-checkTimeSlotAvailability event schedule = all (\eventInSchedule -> compareTime event eventInSchedule) (events schedule)
+checkTimeSlotAvailability event schedule = any (\eventInSchedule -> (compareTime event eventInSchedule) && (placeId (eventLocation event) == placeId(eventLocation eventInSchedule)) && (locationID (eventLocation event) == locationID (eventLocation eventInSchedule))) (events schedule)
 
 
-generateEventReport :: ConferenceSchedule -> String
-generateEventReport schedule = "Total events: " ++ length(events schedule) ++ "\nLocations: " ++ show byLocation ++ "\nSpeakers: " ++ show bySpeaker
+findEventById :: Int -> ConferenceSchedule -> Maybe Event
+findEventById id schedule = find (\event -> eventId event == id) (events schedule)
 
-showbyLocation :: [Events]->[Location]->String
-showbyLocation [] _ = ""
-showbyLocation _ [] = ""
-showbyLocation (x:xs) (y:ys) 
-  |locationID(place x) == locationId y = "location: "++ name y ++ " event: "++ name x ++"\n"++showbyLocation xs y ++showbyLocation ys x
-  |otherwise showbyLocation xs y ++showbyLocation ys x
+updateEventName :: Int -> ConferenceSchedule -> String -> ConferenceSchedule
+updateEventName id schedule newName =
+  case findEventById id schedule of
+    Just event -> 
+      schedule {events = updatedEvents}
+      where
+        updatedEvent = event {name = newName}
+        updatedEvents = map (\eventInSchedule -> if eventId eventInSchedule == id then updatedEvent else eventInSchedule) (events schedule)
+    Nothing -> schedule
 
-cities :: [Location]
-cities =
-  [ Location 1 "New York"
-  , Location 2 "Los Angeles"
-  , Location 3 "Chicago"
-  , Location 4 "Houston"
-  , Location 5 "Phoenix"
-  ]
+updateEventLocation :: Int -> ConferenceSchedule -> Place -> ConferenceSchedule
+updateEventLocation id schedule newPlace =
+  case findEventById id schedule of
+    Just event ->
+      schedule {events = updatedEvents}
+      where
+        updatedEvent = event {eventLocation = newPlace}
+        updatedEvents = map (\eventInSchedule -> if (eventId eventInSchedule == id && (checkTimeSlotAvailability updatedEvent schedule)) then updatedEvent else eventInSchedule) (events schedule)
+    Nothing -> schedule
 
-places :: [Place]
-places =
-  [ Place 1 101 "Central Park"
-  , Place 1 102 "Times Square"
-  , Place 1 103 "Statue of Liberty"
-  , Place 1 104 "Empire State Building"
-  , Place 1 105 "Brooklyn Bridge"
-  , Place 2 201 "Hollywood Walk of Fame"
-  , Place 2 202 "Venice Beach"
-  , Place 2 203 "Santa Monica Pier"
-  , Place 2 204 "Griffith Observatory"
-  , Place 2 205 "Rodeo Drive"
-  , Place 3 301 "Millennium Park"
-  , Place 3 302 "Navy Pier"
-  , Place 3 303 "The Art Institute of Chicago"
-  , Place 3 304 "Willis Tower"
-  , Place 3 305 "Lincoln Park Zoo"
-  , Place 4 401 "Eiffel Tower"
-  , Place 4 402 "Louvre Museum"
-  , Place 4 403 "Notre-Dame Cathedral"
-  , Place 4 404 "Champs-Élysées"
-  , Place 4 405 "Sacre-Cœur"
-  , Place 5 501 "Big Ben"
-  , Place 5 502 "London Eye"
-  , Place 5 503 "Buckingham Palace"
-  , Place 5 504 "Tower Bridge"
-  , Place 5 505 "British Museum"
-  , Place 6 601 "Taj Mahal"
-  , Place 6 602 "Qutub Minar"
-  , Place 6 603 "Gateway of India"
-  , Place 6 604 "Red Fort"
-  , Place 6 605 "India Gate"
-  ]
-conferenceSchedules :: [ConferenceSchedule]
-conferenceSchedules =
-  [ ConferenceSchedule 101 (Location 1 "New York")
-  , ConferenceSchedule 102 (Location 2 "Los Angeles")
-  , ConferenceSchedule 103 (Location 3 "Chicago")
-  , ConferenceSchedule 104 (Location 4 "Paris")
-  , ConferenceSchedule 105 (Location 5 "London")
-  ]
+updateEventStartTime:: Int -> ConferenceSchedule -> Time -> ConferenceSchedule
+updateEventStartTime id schedule newTime =
+  case findEventById id schedule of
+    Just event ->
+      schedule {events = updatedEvents}
+      where
+        updatedEvent = event {startTime = newTime}
+        updatedEvents = map (\eventInSchedule -> if (eventId eventInSchedule == id && (checkTimeSlotAvailability updatedEvent schedule)) then updatedEvent else eventInSchedule) (events schedule)
+    Nothing -> schedule
 
-main :: IO()
+updateEventEndTime:: Int -> ConferenceSchedule -> Time -> ConferenceSchedule
+updateEventEndTime id schedule newTime =
+  case findEventById id schedule of
+    Just event ->
+      schedule {events = updatedEvents}
+      where
+        updatedEvent = event {endTime = newTime}
+        convertedNewTime = timeConvertor newTime
+        updatedEvents = map (\eventInSchedule -> if (eventId eventInSchedule == id && (checkTimeSlotAvailability updatedEvent schedule) && not(convertedNewTime <= timeConvertor(startTime eventInSchedule))) then updatedEvent else eventInSchedule) (events schedule)
+    Nothing -> schedule
+
+
+
+
+location1 = Location 1 "Castle"
+
+bedroom = Place 1 1 "Bedroom"
+
+seriousDiscussionsRoom = Place 2 1 "Seriuos Discussion Room"
+
+
+location2 = Location 2 "Mansion"
+
+vegasRoom = Place 1 1 "Las Vegas Room"
+
+gothamRoom = Place 2 1 "Gotham Room"
+
+
+
+event1 = Event 1 "How to be ninja" (Time 9 0) (Time 10 0) vegasRoom "R. H."
+
+event2 = Event 2 "What it's like to be Batman" (Time 9 30) (Time 10 30) gothamRoom "Nikolay Kogay"
+
+event3 = Event 3 "Itroduction to Advanced Lying in Bed" (Time 11 0) (Time 12 0) bedroom "Sleeping Beauty"
+
+event4 = Event 4 "1 Billion Lions vs Every Pokemon: Let's Settle This Once and For All" (Time 13 0) (Time 14 0) seriousDiscussionsRoom "J"
+
+event5 = Event 5 "What it's like to be Batman" (Time 9 30) (Time 10 30) gothamRoom "Nikolay Kogay"
+
+
+
+schedule :: ConferenceSchedule
+schedule = ConferenceSchedule 1 location1 [event1]
+
+main :: IO ()
 main = do
+  let updatedSchedule1 = addEventToSchedule event2 schedule
+  print updatedSchedule1
+  putStrLn "\n"
+
+  let updatedSchedule2 = addEventToSchedule event3 updatedSchedule1
+  print updatedSchedule2
+  putStrLn "\n"
+
+  let updatedSchedule3 = addEventToSchedule event1 updatedSchedule2
+  print updatedSchedule3
+  putStrLn "\n"
+
+  let updatedSchedule4 = addEventToSchedule event4 updatedSchedule3
+  print updatedSchedule4
+  putStrLn "\n"
+
+  let updatedSchedule5 = addEventToSchedule event5 updatedSchedule4
+  print updatedSchedule5
+
+
+  let updatedSchedule6 = updateEventName 1 updatedSchedule5 "Don't be Ninja"
+  print updatedSchedule6
+  putStrLn "\n"
+
+  let updatedSchedule7 = updateEventLocation 2 updatedSchedule6 vegasRoom
+  print updatedSchedule7
+  putStrLn "\n"
+
+  let updatedSchedule8 = updateEventStartTime 4 updatedSchedule7 (Time 11 0)
+  print updatedSchedule8
+  putStrLn "\n"
+
+  let updatedSchedule9 = updateEventEndTime 4 updatedSchedule8 (Time 11 0)
+  print updatedSchedule9
+  putStrLn "\n"
