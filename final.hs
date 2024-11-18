@@ -44,7 +44,13 @@ safeAdd event schedule
 addEventToSchedule :: Event -> ConferenceSchedule -> Either String ConferenceSchedule
 addEventToSchedule event schedule = (safeAdd event schedule)
   
-
+findTime:: [Event]->Time->[Event]
+findTime(x:xs) time 
+  | current < timec =findTime xs timec
+  | current >= timec = xs
+  where:
+  current = timeConvertor(startTime x)
+  timec = timeConvertor(startTime time)
 
 timeConvertor :: Time -> Double
 timeConvertor (Time h m) = fromIntegral h + (fromIntegral m)*0.01 
