@@ -1,37 +1,31 @@
-data Location = Location { locationId :: Int, location :: String } deriving Show
-data Place = Place { locationID :: Int, placeId :: Int, lace :: String } deriving Show
-data Event = Event 
-    { eventId   :: Int
-    , name      :: String
-    , startTime :: String
-    , endTime   :: String
-    , place     :: Place
-    , speaker   :: String
-    } deriving Show
+-- Assuming these data types
+data Time = Time { hour :: Int, minute :: Int } deriving (Show)
+data Place = Place { placeId :: Int, locationID :: Int, places :: String } deriving (Show)
+data Location = Location { locationId :: Int, location :: String } deriving (Show)
 
-locations :: [Location]
-locations = 
-  [ Location 1 "Main Hall"
-  , Location 2 "Conference Room A"
-  , Location 3 "Outdoor Stage"
-  ]
+data Event = Event { eventId :: Int, name :: String, startTime :: Time, endTime :: Time, eventLocation :: Place, speaker :: String } deriving (Show, Eq)
 
-events :: [Event]
-events = 
-  [ Event 101 "Keynote Speech" "10:00" "11:00" (Place 1 201 "Main Hall") "Dr. Smith"
-  , Event 102 "Workshop on AI" "12:00" "14:00" (Place 2 202 "Conference Room A") "Prof. Johnson"
-  , Event 103 "Music Concert" "18:00" "20:00" (Place 3 203 "Outdoor Stage") "Band XYZ"
-  , Event 104 "Unknown Event" "15:00" "16:00" (Place 4 204 "Unknown Room") "Unknown Speaker"
-  ]
+data ConferenceSchedule = ConferenceSchedule { scheduleId :: Int, conferenceLocation :: Location, events :: [Event] } deriving (Show)
 
+-- SafeAdd function (with simple checks)
+safeAdd :: Event -> ConferenceSchedule -> Either String ConferenceSchedule
+safeAdd event schedule
+  | elem event (events schedule) = Left "Event already in schedule"
+  | otherwise = Right $ ConferenceSchedule (scheduleId schedule) (conferenceLocation schedule) (event : events schedule)
 
-showbyLocation :: [Event] -> [Location] -> String
-showbyLocation [] _ = ""
-showbyLocation (x:xs) locations = 
-  case find (\loc -> locationId loc == locationID (place x)) locations of
-    Just loc -> "Location: " ++ location loc ++ ", Event: " ++ eventName x ++ "\n" ++ showbyLocation xs locations
-    Nothing  -> "Location: Unknown, Event: " ++ eventName x ++ "\n" ++ showbyLocation xs locations
+-- handleEvent function
+handleEvent :: Event -> ConferenceSchedule -> Either String [Event]
+handleEvent event schedule = fmap events (safeAdd event schedule)
 
+-- Test Data
+event1 = Event 1 "Tech Talk" (Time 10 0) (Time 11 0) (Place 1 1 "Main Hall") "John Doe"
+event2 = Event 2 "AI Workshop" (Time 12 0) (Time 14 0) (Place 2 1 "Room 101") "Jane Smith"
+schedule = ConferenceSchedule 1 (Location 1 "Conference Center") [event1]
+
+-- Test the function
 main :: IO ()
-main = do 
-    putStrLn $ showbyLocation events locations
+main = do
+  let result1 = handleEvent event2 schedule
+  case result1 of
+    Right updatedEvents -> putStrLn $ "Updated events: " ++ show updatedEvents
+    Left errorMsg -> putStrLn $ "Error: " ++ errorMsg
